@@ -73,7 +73,7 @@ public class Heat2D {
         else { //slaves
             double
             for (int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
-                MPI.COMM_World.Recv(heat)
+                MPI.COMM_World.Recv(heat)  //receive square
             }
 
 
