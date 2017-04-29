@@ -1,84 +1,60 @@
-import java.net.*;
-import java.util.*;
+import java.util.Date;
 import mpi.*;
+
 
 public class Heat2D {
     private static double a = 1.0;  // heat speed
     private static double dt = 1.0; // time quantum
     private static double dd = 2.0; // change in system
-    public int myRank = 0;  //rank of process
-    public static int slicer = 25;
+    public int myRank = 0;
+    private final static int aSize = 100;
     private final static int tag = 0;
 
     public static void main( String[] args ) {
         // verify arguments
-        MPI.Init(args);
-        if (args.length != 4) {
-            System.out.
-                    println("usage: " +
-                            "java Heat2D size max_time heat_time interval");
-            System.exit(-1);
-        }
-
-       /* int size = Integer.parseInt( args[0] );
-        int max_time = Integer.parseInt( args[1] );
-        int heat_time = Integer.parseInt( args[2] );
-        int interval  = Integer.parseInt( args[3] );
-        double r = a * dt / ( dd * dd );*/
-
-     /*   // create a space
-        double[][][] z = new double[2][size][size];
-        for ( int p = 0; p < 2; p++ )
-            for ( int x = 0; x < size; x++ )
-                for ( int y = 0; y < size; y++ )
-                    z[p][x][y] = 0.0; // no heat or cold
-
-        // start a timer
-        Date startTime = new Date( ); */
-        int size = Integer.parseInt( args[0] );
-        int max_time = Integer.parseInt( args[1] );
-        int heat_time = Integer.parseInt( args[2] );
-        int interval  = Integer.parseInt( args[3] );
-        double r = a * dt / ( dd * dd );
-
-
-        double[][][] heatSpace = new double[2][size][size];
-        for ( int p = 0; p < 2; p++ )
-            for ( int x = 0; x < size; x++ )
-                for ( int y = 0; y < size; y++ )
-                    heatSpace[p][x][y] = 0.0; // no heat or cold
-
-
-        MPIHeat(heatSpace,size, max_time,heat_time,interval,r);
-    }
-    public void MPIHeat(double[][][] heatSpace, int size, int max_time, int heat_time, int interval, double r) {
 
         if ( MPI.COMM_WORLD.Rank( ) == 0 ) { // master
 
+            if (args.length != 4) {
+                System.out.
+                        println("usage: " +
+                                "java Heat2D size max_time heat_time interval");
+                System.exit(-1);
+            }
 
 
-//we can only pass 1 dimensional arrays.
-//we alternate between the 2 squares.
+            int stripe = aSize / MPI.COMM_WORLD.Size()
+
+            int size = Integer.parseInt(args[0]);
+            int max_time = Integer.parseInt(args[1]);
+            int heat_time = Integer.parseInt(args[2]);
+            int interval = Integer.parseInt(args[3]);
+            double r = a * dt / (dd * dd);
+
             // create a space
+            double[][][] z = new double[2][size][size];
+            for (int p = 0; p < 2; p++)
+                for (int x = 0; x < size; x++)
+                    for (int y = 0; y < size; y++)
+                        z[p][x][y] = 0.0; // no heat or cold
+
+            double[][] heatTable1 = z[0];
+            double[][] heatTable2 = z[1];
 
             // start a timer
-            Date startTime = new Date( );
+            Date startTime = new Date();
 
 
             for(int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
-                MPI.COMM_WORLD.Send(heatSpace, slicer * rank, slicer, MPI.DOUBLE, rank, tag);
+                MPI.COMM_WORLD.Send(heatTable1, stripe * rank, stripe, MPI.DOUBLE, rank, tag);
             }
-        } //end of master.
 
-        else { //slaves
-            double
-            for (int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
-                MPI.COMM_World.Recv(heat)  //receive square
+            for(int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
+                MPI.COMM_WORLD.Send(heatTable2, stripe * rank, stripe, MPI.DOUBLE, rank, tag);
             }
 
 
-        }
-
+        } //I need to send the stuff to slaves.
 
         // simulate heat diffusion
         for ( int t = 0; t < max_time; t++ ) {
