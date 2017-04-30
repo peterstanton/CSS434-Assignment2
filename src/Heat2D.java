@@ -13,7 +13,16 @@ public class Heat2D {
     public static void main( String[] args ) {
         // verify arguments
 
+        int stripe = aSize / MPI.COMM_WORLD.Size()
+
+        int size = Integer.parseInt(args[0]);
+        int max_time = Integer.parseInt(args[1]);
+        int heat_time = Integer.parseInt(args[2]);
+        int interval = Integer.parseInt(args[3]);
+        double r = a * dt / (dd * dd);
+
         if ( MPI.COMM_WORLD.Rank( ) == 0 ) { // master
+
 
             if (args.length != 4) {
                 System.out.
@@ -21,15 +30,6 @@ public class Heat2D {
                                 "java Heat2D size max_time heat_time interval");
                 System.exit(-1);
             }
-
-
-            int stripe = aSize / MPI.COMM_WORLD.Size()
-
-            int size = Integer.parseInt(args[0]);
-            int max_time = Integer.parseInt(args[1]);
-            int heat_time = Integer.parseInt(args[2]);
-            int interval = Integer.parseInt(args[3]);
-            double r = a * dt / (dd * dd);
 
             // create a space
             double[][][] z = new double[2][size][size];
@@ -44,23 +44,23 @@ public class Heat2D {
             // start a timer
             Date startTime = new Date();
 
-
-            for(int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
-                MPI.COMM_WORLD.Send(heatTable1, stripe * rank, stripe, MPI.DOUBLE, rank, tag);
-            }
-
-            for(int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
-                MPI.COMM_WORLD.Send(heatTable2, stripe * rank, stripe, MPI.DOUBLE, rank, tag);
-            }
-
-
         } //I need to send the stuff to slaves.
+
+
+        if ( MPI.COMM_WORLD.Rank( ) != 0 ) { // slaves
+
+            double[][]heatTable1 = new double[stripe][stripe];
+            double[][]heatTable2 = new double[stripe][stripe];
+        }
+
 
         // simulate heat diffusion
         for ( int t = 0; t < max_time; t++ ) {
             int p = t % 2; // p = 0 or 1: indicates the phase
 
             // two left-most and two right-most columns are identical
+
+            //REFACTOR THIS TO USE THE CORRECT SQUARE AND PROPAGATE EDGES, THEN REPORT RESULTS.
             for ( int y = 0; y < size; y++ ) {
                 z[p][0][y] = z[p][1][y];
                 z[p][size - 1][y] = z[p][size - 2][y];
