@@ -38,8 +38,8 @@ public class Heat2D {
                     for (int y = 0; y < size; y++)
                         z[p][x][y] = 0.0; // no heat or cold
 
-            double[][] heatTable1 = z[0];
-            double[][] heatTable2 = z[1];
+
+            //double[][][] heatTable = new double[2][stripe][stripe];
 
             // start a timer
             Date startTime = new Date();
@@ -47,38 +47,55 @@ public class Heat2D {
         } //I need to send the stuff to slaves.
 
 
-        if ( MPI.COMM_WORLD.Rank( ) != 0 ) { // slaves
+        /*if ( MPI.COMM_WORLD.Rank( ) != 0 ) { // slaves
 
-            double[][]heatTable1 = new double[stripe][stripe];
-            double[][]heatTable2 = new double[stripe][stripe];
-        }
+            double[][][]heatTable = new double[2][stripe][stripe];
+        }*/
 
+        double[][][] heatTable = new double[2][stripe][stripe];
 
-        // simulate heat diffusion
+        // simulate heat diffusion START HERE
         for ( int t = 0; t < max_time; t++ ) {
             int p = t % 2; // p = 0 or 1: indicates the phase
 
             // two left-most and two right-most columns are identical
 
             //REFACTOR THIS TO USE THE CORRECT SQUARE AND PROPAGATE EDGES, THEN REPORT RESULTS.
-            for ( int y = 0; y < size; y++ ) {
-                z[p][0][y] = z[p][1][y];
-                z[p][size - 1][y] = z[p][size - 2][y];
+            for ( int y = 0; y < stripe; y++ ) {
+                heatTable[p][0][y] = heatTable[p][1][y];
+                heatTable[p][stripe - 1][y] = heatTable[p][stripe - 2][y];
             }
 
             // two upper and lower rows are identical
-            for ( int x = 0; x < size; x++ ) {
-                z[p][x][0] = z[p][x][1];
-                z[p][x][size - 1] = z[p][x][size - 2];
+            for ( int x = 0; x < stripe; x++ ) {
+                heatTable[p][x][0] = heatTable[p][x][1];
+                heatTable[p][x][stripe - 1] = heatTable[p][x][stripe - 2];
             }
 
-            // keep heating the bottom until t < heat_time
+            // keep heating the bottom until t < heat_time     //NEEDS WORK, I think this might be heating every stripe.
             if ( t < heat_time ) {
-                for ( int x = size /3; x < size / 3 * 2; x++ )
-                    z[p][x][0] = 19.0; // heat
+                for ( int x = stripe /3; x < size / 3 * 2; x++ )
+                    heatTable[p][x][0] = 19.0; // heat
             }
 
-            // display intermediate results
+
+            //need to exchange edges now.
+
+            for (int rank = 0; i < MPI.COMM_WORLD.Size(); rank += 2) {
+                //exchange boundaries with special conditions for 0,1,n-2,n-1.
+                if (MPI.COMM_WORLD.Rank() != 0) {
+                    //exchange left rank.
+                }
+                if (MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1) {
+                    //exchange right rank.
+                }
+            }
+
+
+                //OR REALLY, I SHOULD DO IT ALL AT ONCE, AND THE LEFT AND RIGHTMOST RANKS SHOULD
+                //HAVE SPECIAL CONDITIONS.
+
+            // display intermediate results //need to send stuff from ranks back to rank 0.
             if ( interval != 0 &&
                     ( t % interval == 0 || t == max_time - 1 ) ) {
                 System.out.println( "time = " + t );
