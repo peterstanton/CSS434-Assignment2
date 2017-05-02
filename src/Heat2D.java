@@ -48,7 +48,7 @@ public class Heat2D {
 
         } //I need to send the stuff to slaves.
 
-        double[][] heatTable = new double[2][stripe];
+        double[][][] heatTable = new double[2][size][size];
 
         // simulate heat diffusion START HERE
         for ( int t = 0; t < max_time; t++ ) {
