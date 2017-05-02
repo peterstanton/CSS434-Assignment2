@@ -76,7 +76,7 @@ public class Heat2D {
 
             // two left-most and two right-most columns are identical
 	    for ( int y = 0; y < size; y++ ) {
-		heatTable[indexer(p,0,y) = heatTable[indexer(p,1,y)];
+		heatTable[indexer(p,0,y)] = heatTable[indexer(p,1,y)];
 		heatTable[indexer(p,size-1,y)] = heatTable[indexer(p,size-2,y)];
 	    }
 
@@ -150,9 +150,9 @@ public class Heat2D {
             int p2 = (p + 1) % 2;
             for ( int x = 1; x < size - 1; x++ )
                 for ( int y = 1; y < size - 1; y++ )
-                    z[p2][x][y] = z[p][x][y] +
-                            r * ( z[p][x+1][y] - 2 * z[p][x][y] + z[p][x-1][y] ) +
-                            r * ( z[p][x][y+1] - 2 * z[p][x][y] + z[p][x][y-1] );
+                    heatTable[indexer(p2,x,y)] = heatTable[indexer(p,x,y)] +
+                            r * ( heatTable[indexer(p,x+1,y)] - 2 * heatTable[indexer(p,x,y)] + heatTable[indexer(p,x-1,y)]) +
+                            r * ( heatTable[indexer(p,x,y+1)] - 2 * heatTable[indexer(p,x,y)] + heatTable[indexer(p,x,y-1)]);
 
         } // end of simulation
 
