@@ -41,18 +41,14 @@ public class Heat2D {
 
             //double[][][] heatTable = new double[2][stripe][stripe];
 
+
+
             // start a timer
             Date startTime = new Date();
 
         } //I need to send the stuff to slaves.
 
-
-        /*if ( MPI.COMM_WORLD.Rank( ) != 0 ) { // slaves
-
-            double[][][]heatTable = new double[2][stripe][stripe];
-        }*/
-
-        double[][][] heatTable = new double[2][stripe][stripe];
+        double[][] heatTable = new double[2][stripe];
 
         // simulate heat diffusion START HERE
         for ( int t = 0; t < max_time; t++ ) {
@@ -74,7 +70,7 @@ public class Heat2D {
 
             // keep heating the bottom until t < heat_time     //NEEDS WORK, I think this might be heating every stripe.
             if ( t < heat_time ) {
-                for ( int x = stripe /3; x < size / 3 * 2; x++ )
+                for ( int x = stripe /3; x < stripe / 3 * 2; x++ )
                     heatTable[p][x][0] = 19.0; // heat
             }
 
