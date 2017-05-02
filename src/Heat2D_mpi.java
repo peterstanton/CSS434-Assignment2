@@ -95,35 +95,56 @@ public class Heat2D {
 
             for (int rank = 0; i < MPI.COMM_WORLD.Size(); rank += 2) {
                 if (MPI.COMM_WORLD.Rank() != 0) {
-                    MPI.COMM_WORLD.Send(heatTable, (avecols*(myRank-1))+1, stripe, MPI.DOUBLE, myRank-1,tag)
+                    MPI.COMM_WORLD.Send(heatTable, (avecols*(myRank-1)*stripe)+1, stripe, MPI.DOUBLE, myRank-1,tag);
+		    MPI.COMM_WORLD.Recv(heatTable, (avecols*(myRank-1)*stripe)+1, stripe, MPI.DOUBLE, myRank+1,tag); 
+			
                 }
                 if (MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1) {
-                    MPI.COMM_WORLD.Send(heatTable, avecols*myRank, stripe, MPI.DOUBLE, myRank+1,tag)
+                    MPI.COMM_WORLD.Send(heatTable, avecols*myRank*stripe, stripe, MPI.DOUBLE, myRank+1,tag);
+		    MPI.COMM_WORLD.Recv(heatTable, avecols*myRank*stripe, stripe, MPI.DOUBLE, myRank-1, tag);
                 }
             }
-
-	    for (int rank = 0; i < MPI.COMM_WORLD.Size(); rank += 2) {
-		if (MPI.COMM_WORLD.Rank() != 0) {
-	 	    MPI.COMM_WORLD.Recv(heatTable, (avecols*(myRank-1))+1, stripe, MPI.DOUBLE, myRank+1,tag);
-		}
-		if (MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1) {
-		    MPI.COMM_WORLD.Recv(heatTable, avecols*myRank, stripe, MPI.DOUBLE, myRank-1, tag);
-		}
-
-	    }
 
             // display intermediate results //need to send stuff from ranks back to rank 0.
             if ( interval != 0 &&
                     ( t % interval == 0 || t == max_time - 1 ) ) {
-                System.out.println( "time = " + t );
-                for ( int y = 0; y < size; y++ ) {
+		
+		if (MPI.COMM_WORLD.Rank() != 0) {
+		    MPI.COMM_WORLD.Send(myRank, 0, 1, MPI.INT, 0, tag);
+		    if(p == 0)
+		         MPI.COMM_WORLD.Send(heatTable, myRank*stripe, stripe, MPI.DOUBLE, 0, tag);
+		    }
+		    else{
+		         MPI.COMM_WORLD.Send(heatTable,((size*size)+(myRank*stripe)),stripe, MPI.DOUBLE,0,tag);
+		    }
+		}
+
+		if (MPI.COMM_WORLD.Rank() == 0) {
+		    int senderRank = 0;
+		    for (int rank = 1; rank < MPI.COMM_World.Size(); rank++) {
+		        MPI.COMM_WORLD.Recv(senderRank,0,1,MPI.INT,rank,tag);
+			if(p == 0) {
+			     MPI.COMM_WORLD.Recv(heatTable,senderRank*stripe,stripe,MPI.DOUBLE,rank,tag);
+			}
+			else {
+			     MPI.COMM_WORLD.Recv(heatTable,((size*size)+(myRank*stripe)),stripe,MPI.DOUBLE,rank,tag);
+			}
+		    }
+		System.out.println( "time = " + t );
+
+	    for ( int y = 0; y < size; y++ ) {
                     for ( int x = 0; x < size; x++ )
-                        System.out.print( (int)( Math.floor(z[p][x][y] / 2) )
+                        System.out.print( (int)( Math.floor(heatTable[indexer(p,x,y)] / 2) )
                                 + " " );
                     System.out.println( );
                 }
                 System.out.println( );
             }
+		}
+
+		
+		
+
 
             // perform forward Euler method
             int p2 = (p + 1) % 2;
