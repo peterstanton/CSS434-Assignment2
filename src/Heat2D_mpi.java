@@ -166,8 +166,10 @@ public class Heat2D_mpi {
                         MPI.COMM_WORLD.Send(heatTable, size*size + myOffset, size, MPI.DOUBLE, myRank - 1, tag);
                         if (MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1) {
                             //I need an if to stop rank N-1 from receiving from outside the square.
+                            int j = 0;
                             for (int i = (size*size)+myOffset+(myNumCols*size)-size; i < (size*size)+myOffset+(myNumCols*size); i++) {
-                                rightTemp[i] = heatTable[i];
+                                rightTemp[j] = heatTable[i];
+                                j++;
                             }
                             MPI.COMM_WORLD.Recv(heatTable, size*size + myOffset, size, MPI.DOUBLE, myRank + 1, tag);
                         }
@@ -200,9 +202,10 @@ public class Heat2D_mpi {
 
             if (MPI.COMM_WORLD.Rank() == 0) {
                 for (int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
+                    System.out.println("It is time to print");
                     int incomingOffset = 0;
                     MPI.COMM_WORLD.Recv(incomingOffset,0,1,MPI.INT,rank,tag);
-                    if (p == 0) {  //Master node needs to see the incoming offset.
+                    if (p == 0||p==1) {  //Master node needs to see the incoming offset.
                         MPI.COMM_WORLD.Recv(heatTable, incomingOffset, stripe * size, MPI.DOUBLE, rank, tag);
                     } /*else {
                         MPI.COMM_WORLD.Recv(heatTable, ((size * size) + (rank * stripe) * size), stripe * size, MPI.DOUBLE, rank, tag);
@@ -219,7 +222,7 @@ public class Heat2D_mpi {
                 System.out.println();
             }
 
-
+            System.out.println("I am doing forward Euler method");
             // perform forward Euler method
             int p2 = (p + 1) % 2;
             for (int x = 1; x < size - 1; x++) {
