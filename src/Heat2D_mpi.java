@@ -153,19 +153,23 @@ public class Heat2D_mpi {
 
                 if (MPI.COMM_WORLD.Rank() != 0) {
                     if (p == 0)
+                        MPI.COMM_WORLD.Send(myOffset,0,1,MPI.INT,0,tag);
                         MPI.COMM_WORLD.Send(heatTable, myOffset, myNumCols*size, MPI.DOUBLE, 0, tag);
                 } else {
+                    MPI.COM_WORLD.Send(size*size + myOffset,0,1,MPI.INT,0,tag);
                     MPI.COMM_WORLD.Send(heatTable, ((size * size) + myOffset), myNumCols * size, MPI.DOUBLE, 0, tag);
                 }
             }
 
             if (MPI.COMM_WORLD.Rank() == 0) {
                 for (int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
+                    int incomingOffset = 0;
+                    MPI.COMM_WORLD.Recv(incomingOffset,0,1,MPI.INT,rank,tag);
                     if (p == 0) {  //Master node needs to see the incoming offset.
-                        MPI.COMM_WORLD.Recv(heatTable, colsPerRank * size * size, stripe * size, MPI.DOUBLE, rank, tag);
-                    } else {
+                        MPI.COMM_WORLD.Recv(heatTable, incomingOffset, stripe * size, MPI.DOUBLE, rank, tag);
+                    } /*else {
                         MPI.COMM_WORLD.Recv(heatTable, ((size * size) + (rank * stripe) * size), stripe * size, MPI.DOUBLE, rank, tag);
-                    }
+                    }*/
                 }
                 System.out.println("time = " + t);
 
