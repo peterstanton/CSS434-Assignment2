@@ -133,15 +133,16 @@ public class Heat2D_mpi {
             //but then I'll have to store the right to send that, then receive on the left.
 
             double[] rightTemp = new double[size];
-            //double[] leftTemp = new double[size];
             if (p==0) {
                 for (int rank = 0; rank < MPI.COMM_WORLD.Size(); rank += 2) {
                     if (MPI.COMM_WORLD.Rank() != 0) {
                         MPI.COMM_WORLD.Send(heatTable, myOffset, size, MPI.DOUBLE, myRank - 1, tag);
                         if (MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1) {
                             //I need an if to stop rank N-1 from receiving from outside the square.
+                            int j = 0;
                             for (int i = myOffset+(myNumCols*size)-size; i < myOffset+(myNumCols*size); i++) {
-                                rightTemp[i] = heatTable[i];
+                                rightTemp[j] = heatTable[i];
+                                j++;
                             }
                             MPI.COMM_WORLD.Recv(heatTable, myOffset+(myNumCols*size)-size, size, MPI.DOUBLE, myRank + 1, tag);
                         }
