@@ -13,7 +13,7 @@ public class Heat2D {
     public static void main( String[] args ) {
         // verify arguments
 
-        int stripe = aSize / MPI.COMM_WORLD.Size()
+        int stripe = aSize / MPI.COMM_WORLD.Size();
 
         int size = Integer.parseInt(args[0]);
         int max_time = Integer.parseInt(args[1]);
@@ -78,7 +78,7 @@ public class Heat2D {
 
             //need to exchange edges now.
 
-            for (int rank = 0; i < MPI.COMM_WORLD.Size(); rank += 2) {
+            for (int rank = 0; rank < MPI.COMM_WORLD.Size(); rank += 2) {
                 //exchange boundaries with special conditions for 0,1,n-2,n-1.
                 if (MPI.COMM_WORLD.Rank() != 0) {
                     //exchange left rank.
