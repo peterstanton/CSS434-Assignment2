@@ -132,21 +132,26 @@ public class Heat2D_mpi {
             //should I send to the left, receive on the right? Yeah, I should, shouldn't I?
             //but then I'll have to store the right to send that, then receive on the left.
 
+            double[] rightTemp = new double[size];
+            //double[] leftTemp = new double[size];
             if (p==0) {
                 for (int rank = 0; rank < MPI.COMM_WORLD.Size(); rank += 2) {
                     if (MPI.COMM_WORLD.Rank() != 0) {
                         MPI.COMM_WORLD.Send(heatTable, myOffset, size, MPI.DOUBLE, myRank - 1, tag);
                         if (MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1) {
                             //I need an if to stop rank N-1 from receiving from outside the square.
-                            MPI.COMM_WORLD.Recv(heatTable, myOffset, size, MPI.DOUBLE, myRank + 1, tag);
+                            for (int i = myOffset+(myNumCols*size)-size; i < myOffset+(myNumCols*size); i++) {
+                                rightTemp[i] = heatTable[i];
+                            }
+                            MPI.COMM_WORLD.Recv(heatTable, myOffset+(myNumCols*size)-size, size, MPI.DOUBLE, myRank + 1, tag);
                         }
 
                     }
                     if (MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1) {
-                        MPI.COMM_WORLD.Send(heatTable, myOffset + (myNumCols * size) - size, size, MPI.DOUBLE, myRank + 1, tag);
+                        MPI.COMM_WORLD.Send(rightTemp, 0, size, MPI.DOUBLE, myRank + 1, tag);
                         //I need an if to stop rank 0 from receiving from outside the square.
-                        if (MPI.COMM_WORLD.Rank() != 0) {
-                            MPI.COMM_WORLD.Recv(heatTable, myOffset + (myNumCols * size) - size, size, MPI.DOUBLE, myRank - 1, tag);
+                        if (MPI.COMM_WORLD.Rank() != 0) {  //receive on the left.
+                            MPI.COMM_WORLD.Recv(heatTable, myOffset, size, MPI.DOUBLE, myRank - 1, tag);
                         }
                     }
                 }
@@ -157,12 +162,15 @@ public class Heat2D_mpi {
                         MPI.COMM_WORLD.Send(heatTable, size*size + myOffset, size, MPI.DOUBLE, myRank - 1, tag);
                         if (MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1) {
                             //I need an if to stop rank N-1 from receiving from outside the square.
+                            for (int i = (size*size)+myOffset+(myNumCols*size)-size; i < (size*size)+myOffset+(myNumCols*size); i++) {
+                                rightTemp[i] = heatTable[i];
+                            }
                             MPI.COMM_WORLD.Recv(heatTable, size*size + myOffset, size, MPI.DOUBLE, myRank + 1, tag);
                         }
 
                     }
                     if (MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1) {  //figure out the offset for square 1.
-                        MPI.COMM_WORLD.Send(heatTable, size*size + myOffset + (myNumCols * size) - size, size, MPI.DOUBLE, myRank + 1, tag);
+                        MPI.COMM_WORLD.Send(rightTemp, 0, size, MPI.DOUBLE, myRank + 1, tag);
                         //I need an if to stop rank 0 from receiving from outside the square.
                         if (MPI.COMM_WORLD.Rank() != 0) {
                             MPI.COMM_WORLD.Recv(heatTable, size*size + myOffset + (myNumCols*size) - size, size, MPI.DOUBLE, myRank - 1, tag);
