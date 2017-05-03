@@ -104,83 +104,82 @@ public class Heat2D_mpi {
         for ( int t = 0; t < max_time; t++ ) {
             int p = t % 2; // p = 0 or 1: indicates the phase
 
-	    
 
             // two left-most and two right-most columns are identical
-	    for ( int y = 0; y < size; y++ ) {
-		heatTable[indexer(p,0,y,size)] = heatTable[indexer(p,1,y,size)];
-		heatTable[indexer(p,size-1,y,size)] = heatTable[indexer(p,size-2,y,size)];
-	    }
+            for (int y = 0; y < size; y++) {
+                heatTable[indexer(p, 0, y, size)] = heatTable[indexer(p, 1, y, size)];
+                heatTable[indexer(p, size - 1, y, size)] = heatTable[indexer(p, size - 2, y, size)];
+            }
 
             // two upper and lower rows are identical
-	    for ( int x = 0; x < size; x++ ) {
-		heatTable[indexer(p,x,0,size)] = heatTable[indexer(p,x,1,size)];
-		heatTable[indexer(p,x,size-1,size)] = heatTable[indexer(p,x,size-2,size)];
-	    }
+            for (int x = 0; x < size; x++) {
+                heatTable[indexer(p, x, 0, size)] = heatTable[indexer(p, x, 1, size)];
+                heatTable[indexer(p, x, size - 1, size)] = heatTable[indexer(p, x, size - 2, size)];
+            }
             // keep heating the bottom until t < heat_time 
-            if ( t < heat_time ) {
-                for ( int x = size /3; x < size / 3 * 2; x++ )
-                    heatTable[indexer(p,x,0,size)] = 19.0; // heat
+            if (t < heat_time) {
+                for (int x = size / 3; x < size / 3 * 2; x++)
+                    heatTable[indexer(p, x, 0, size)] = 19.0; // heat
             }
 
             //need to exchange edges now.  KEEP WORKING FROM HERE, PETER
 
             for (int rank = 0; rank < MPI.COMM_WORLD.Size(); rank += 2) {
                 if (MPI.COMM_WORLD.Rank() != 0) {
-                    MPI.COMM_WORLD.Send(heatTable, (avecols*(myRank-1)*size)+1, stripe*size, MPI.DOUBLE, myRank-1,tag);
-		//I need an if to stop rank N-1 from receiving from outside the square.
-		    MPI.COMM_WORLD.Recv(heatTable, (avecols*(myRank-1)*size)+1, stripe*size, MPI.DOUBLE, myRank+1,tag); 
-			
+                    MPI.COMM_WORLD.Send(heatTable, (avecols * (myRank - 1) * size) + 1, stripe * size, MPI.DOUBLE, myRank - 1, tag);
+                    //I need an if to stop rank N-1 from receiving from outside the square.
+                    MPI.COMM_WORLD.Recv(heatTable, (avecols * (myRank - 1) * size) + 1, stripe * size, MPI.DOUBLE, myRank + 1, tag);
+
                 }
                 if (MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1) {
-                    MPI.COMM_WORLD.Send(heatTable, avecols*myRank*size, stripe*size, MPI.DOUBLE, myRank+1,tag);
-		//I need an if to stop rank 0 from receiving from outside the square.
-		    MPI.COMM_WORLD.Recv(heatTable, avecols*myRank*size, stripe*size, MPI.DOUBLE, myRank-1, tag);
+                    MPI.COMM_WORLD.Send(heatTable, avecols * myRank * size, stripe * size, MPI.DOUBLE, myRank + 1, tag);
+                    //I need an if to stop rank 0 from receiving from outside the square.
+                    MPI.COMM_WORLD.Recv(heatTable, avecols * myRank * size, stripe * size, MPI.DOUBLE, myRank - 1, tag);
                 }
             }
 
             // display intermediate results //need to send stuff from ranks back to rank 0.
-            if ( interval != 0 &&
-                    ( t % interval == 0 || t == max_time - 1 ) ) {
-		
-		if (MPI.COMM_WORLD.Rank() != 0) {
-		    if(p == 0)
-		         MPI.COMM_WORLD.Send(heatTable, myRank*stripe*size, stripe*size, MPI.DOUBLE, 0, tag);
-		    }
-		    else{
-		         MPI.COMM_WORLD.Send(heatTable,((size*size)+(myRank*stripe*size)),stripe*size, MPI.DOUBLE,0,tag);
-		    }
-		}
+            if (interval != 0 &&
+                    (t % interval == 0 || t == max_time - 1)) {
 
-		if (MPI.COMM_WORLD.Rank() == 0) {
-		    for (int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
-			if(p == 0) {
-			     MPI.COMM_WORLD.Recv(heatTable,rank*stripe*size,stripe*size,MPI.DOUBLE,rank,tag);
-			}
-			else {
-			     MPI.COMM_WORLD.Recv(heatTable,((size*size)+(rank*stripe)*size),stripe*size,MPI.DOUBLE,rank,tag);
-			}
-		    }
-		System.out.println( "time = " + t );
-
-	    for ( int y = 0; y < size; y++ ) {
-                    for ( int x = 0; x < size; x++ )
-                        System.out.print( (int)( Math.floor(heatTable[indexer(p,x,y,size)] / 2) )
-                                + " " );
-                    System.out.println( );
+                if (MPI.COMM_WORLD.Rank() != 0) {
+                    if (p == 0)
+                        MPI.COMM_WORLD.Send(heatTable, myRank * stripe * size, stripe * size, MPI.DOUBLE, 0, tag);
+                } else {
+                    MPI.COMM_WORLD.Send(heatTable, ((size * size) + (myRank * stripe * size)), stripe * size, MPI.DOUBLE, 0, tag);
                 }
-                System.out.println( );
             }
 
-		
+            if (MPI.COMM_WORLD.Rank() == 0) {
+                for (int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
+                    if (p == 0) {
+                        MPI.COMM_WORLD.Recv(heatTable, rank * stripe * size, stripe * size, MPI.DOUBLE, rank, tag);
+                    } else {
+                        MPI.COMM_WORLD.Recv(heatTable, ((size * size) + (rank * stripe) * size), stripe * size, MPI.DOUBLE, rank, tag);
+                    }
+                }
+                System.out.println("time = " + t);
+
+                for (int y = 0; y < size; y++) {
+                    for (int x = 0; x < size; x++)
+                        System.out.print((int) (Math.floor(heatTable[indexer(p, x, y, size)] / 2))
+                                + " ");
+                    System.out.println();
+                }
+                System.out.println();
+            }
+
+
             // perform forward Euler method
             int p2 = (p + 1) % 2;
-            for ( int x = 1; x < size - 1; x++ )
-                for ( int y = 1; y < size - 1; y++ )
-                    heatTable[indexer(p2,x,y,size)] = heatTable[indexer(p,x,y,size)] +
-                            r * ( heatTable[indexer(p,x+1,y,size)] - 2 * heatTable[indexer(p,x,y,size)] + heatTable[indexer(p,x-1,y,size)]) +
-                            r * ( heatTable[indexer(p,x,y+1,size)] - 2 * heatTable[indexer(p,x,y,size)] + heatTable[indexer(p,x,y-1,size)]);
-        } // end of simulation
+            for (int x = 1; x < size - 1; x++) {
+                for (int y = 1; y < size - 1; y++) {
+                    heatTable[indexer(p2, x, y, size)] = heatTable[indexer(p, x, y, size)] +
+                            r * (heatTable[indexer(p, x + 1, y, size)] - 2 * heatTable[indexer(p, x, y, size)] + heatTable[indexer(p, x - 1, y, size)]) +
+                            r * (heatTable[indexer(p, x, y + 1, size)] - 2 * heatTable[indexer(p, x, y, size)] + heatTable[indexer(p, x, y - 1, size)]);
+                } // end of simulation
+            }
+        }
 
 
         // finish the timer
