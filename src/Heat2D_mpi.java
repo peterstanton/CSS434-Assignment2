@@ -191,13 +191,15 @@ public class Heat2D_mpi {
                 System.out.println("Printing acceptability achieved on round " + t);
                 if (MPI.COMM_WORLD.Rank() != 0) {
                     if (p == 0)
+                        System.out.println("Sending information to Master on round " + 5 + "from square " + p);
                         MPI.COMM_WORLD.Send(myOffset,0,1,MPI.INT,0,tag);
                         MPI.COMM_WORLD.Send(heatTable, myOffset, myNumCols*size, MPI.DOUBLE, 0, tag);
                 } else {
+                    System.out.println("Sending information to Master on round " + 5 + "from square " + p);
                     MPI.COMM_WORLD.Send(size*size + myOffset,0,1,MPI.INT,0,tag);
                     MPI.COMM_WORLD.Send(heatTable, ((size * size) + myOffset), myNumCols * size, MPI.DOUBLE, 0, tag);
                 }
-
+                System.out.println("Master has gotten all the information on round " + t);
                 //move printing code in here.
                 if (MPI.COMM_WORLD.Rank() == 0) {
                     for (int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
