@@ -13,6 +13,7 @@ public class Heat2D_mpi {
     public static int extra;                 // extra #rows allocated to some ranks
     public static int avColsPerRank;
     public static int myOffset = 0;
+    public static int[] offsetOfRank;
     int mtype;                 // message type (tagFromMaster or tagFromSlave )
 
 
@@ -125,6 +126,7 @@ public class Heat2D_mpi {
             }
 
             //need to exchange edges now.  KEEP WORKING FROM HERE. Rewrite all the offsets.
+            //shit, I need to account for P in here, to do the right square, don't I?
 
             for (int rank = 0; rank < MPI.COMM_WORLD.Size(); rank += 2) {
                 if (MPI.COMM_WORLD.Rank() != 0) {
@@ -145,21 +147,22 @@ public class Heat2D_mpi {
             }
 
             // display intermediate results //need to send stuff from ranks back to rank 0.
+            //just have the damn rank send their own offsets first.
             if (interval != 0 &&
                     (t % interval == 0 || t == max_time - 1)) {
 
                 if (MPI.COMM_WORLD.Rank() != 0) {
                     if (p == 0)
-                        MPI.COMM_WORLD.Send(heatTable, myRank * stripe * size, stripe * size, MPI.DOUBLE, 0, tag);
+                        MPI.COMM_WORLD.Send(heatTable, myOffset, myNumCols*size, MPI.DOUBLE, 0, tag);
                 } else {
-                    MPI.COMM_WORLD.Send(heatTable, ((size * size) + (myRank * stripe * size)), stripe * size, MPI.DOUBLE, 0, tag);
+                    MPI.COMM_WORLD.Send(heatTable, ((size * size) + myOffset), myNumCols * size, MPI.DOUBLE, 0, tag);
                 }
             }
 
             if (MPI.COMM_WORLD.Rank() == 0) {
                 for (int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
-                    if (p == 0) {
-                        MPI.COMM_WORLD.Recv(heatTable, rank * stripe * size, stripe * size, MPI.DOUBLE, rank, tag);
+                    if (p == 0) {  //Master node needs to see the incoming offset.
+                        MPI.COMM_WORLD.Recv(heatTable, colsPerRank * size * size, stripe * size, MPI.DOUBLE, rank, tag);
                     } else {
                         MPI.COMM_WORLD.Recv(heatTable, ((size * size) + (rank * stripe) * size), stripe * size, MPI.DOUBLE, rank, tag);
                     }
