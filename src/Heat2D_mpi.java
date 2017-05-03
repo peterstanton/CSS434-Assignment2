@@ -96,6 +96,7 @@ public class Heat2D_mpi {
 	for (int rank = 0; rank <= myRank; rank++) {    //namely, offset + (size * colsPerRank[myRank]) - size to get the start of the right hand column.
 	    myOffset += colsPerRank[rank] * size;
 	}
+	System.out.println("My internal offset found");
 
 
 	/*if (extra != 0) {
@@ -103,6 +104,7 @@ public class Heat2D_mpi {
 	}*/
 
 
+	    System.out.println("I am simulating heat diffusion");
         // simulate heat diffusion
         for ( int t = 0; t < max_time; t++ ) {
             int p = t % 2; // p = 0 or 1: indicates the phase
@@ -132,6 +134,7 @@ public class Heat2D_mpi {
             //should I send to the left, receive on the right? Yeah, I should, shouldn't I?
             //but then I'll have to store the right to send that, then receive on the left.
 
+            System.out.println("I have reached boundaries exchange.");
             double[] rightTemp = new double[size];
             if (p==0) {
                 for (int rank = 0; rank < MPI.COMM_WORLD.Size(); rank += 2) {
@@ -179,7 +182,7 @@ public class Heat2D_mpi {
                     }
                 }
             }
-
+            System.out.println("I have exited boundaries exchange");
             // display intermediate results //need to send stuff from ranks back to rank 0.
             //just have the damn rank send their own offsets first.
             if (interval != 0 &&
