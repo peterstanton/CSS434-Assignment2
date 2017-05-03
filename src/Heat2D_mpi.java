@@ -189,7 +189,7 @@ public class Heat2D_mpi {
                         MPI.COMM_WORLD.Send(myOffset,0,1,MPI.INT,0,tag);
                         MPI.COMM_WORLD.Send(heatTable, myOffset, myNumCols*size, MPI.DOUBLE, 0, tag);
                 } else {
-                    MPI.COM_WORLD.Send(size*size + myOffset,0,1,MPI.INT,0,tag);
+                    MPI.COMM_WORLD.Send(size*size + myOffset,0,1,MPI.INT,0,tag);
                     MPI.COMM_WORLD.Send(heatTable, ((size * size) + myOffset), myNumCols * size, MPI.DOUBLE, 0, tag);
                 }
             }
