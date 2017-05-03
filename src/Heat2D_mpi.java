@@ -49,7 +49,7 @@ public class Heat2D_mpi {
 
 
         if ( MPI.COMM_WORLD.Rank( ) == 0 ) { // master
-
+            System.out.println("I am inside master initialization");
 
             if (args.length != 9) {
                 System.out.
@@ -71,7 +71,7 @@ public class Heat2D_mpi {
 
          }
 
-
+    System.out.println("Rank" + MPI.COMM_WORLD.Rank() + " is the master");
 	double[] heatTable = new double[2 * size * size];  //this is our 1D computation space.
 
 
