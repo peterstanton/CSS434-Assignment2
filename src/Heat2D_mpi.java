@@ -103,12 +103,11 @@ public class Heat2D_mpi {
 	    for (int i = extra; extra >= 0; i--}
 	}*/
 
-
-	    System.out.println("I am simulating heat diffusion");
         // simulate heat diffusion
         for ( int t = 0; t < max_time; t++ ) {
             int p = t % 2; // p = 0 or 1: indicates the phase
 
+            System.out.println("I am simulating heat diffusion for round" + t);
 
             // two left-most and two right-most columns are identical
             for (int y = 0; y < size; y++) {
