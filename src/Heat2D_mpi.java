@@ -197,29 +197,32 @@ public class Heat2D_mpi {
                     MPI.COMM_WORLD.Send(size*size + myOffset,0,1,MPI.INT,0,tag);
                     MPI.COMM_WORLD.Send(heatTable, ((size * size) + myOffset), myNumCols * size, MPI.DOUBLE, 0, tag);
                 }
-            }
 
-            if (MPI.COMM_WORLD.Rank() == 0) {
-                for (int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
-                    System.out.println("It is time to print");
-                    int incomingOffset = 0;
-                    MPI.COMM_WORLD.Recv(incomingOffset,0,1,MPI.INT,rank,tag);
-                    if (p == 0||p==1) {  //Master node needs to see the incoming offset.
-                        MPI.COMM_WORLD.Recv(heatTable, incomingOffset, stripe * size, MPI.DOUBLE, rank, tag);
-                    } /*else {
+                //move printing code in here.
+                if (MPI.COMM_WORLD.Rank() == 0) {
+                    for (int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
+                        System.out.println("It is time to print");
+                        int incomingOffset = 0;
+                        MPI.COMM_WORLD.Recv(incomingOffset,0,1,MPI.INT,rank,tag);
+                        if (p == 0||p==1) {  //Master node needs to see the incoming offset.
+                            MPI.COMM_WORLD.Recv(heatTable, incomingOffset, stripe * size, MPI.DOUBLE, rank, tag);
+                        } /*else {
                         MPI.COMM_WORLD.Recv(heatTable, ((size * size) + (rank * stripe) * size), stripe * size, MPI.DOUBLE, rank, tag);
                     }*/
-                }
-                System.out.println("time = " + t);
+                    }
+                    System.out.println("time = " + t);
 
-                for (int y = 0; y < size; y++) {
-                    for (int x = 0; x < size; x++)
-                        System.out.print((int) (Math.floor(heatTable[indexer(p, x, y, size)] / 2))
-                                + " ");
+                    for (int y = 0; y < size; y++) {
+                        for (int x = 0; x < size; x++)
+                            System.out.print((int) (Math.floor(heatTable[indexer(p, x, y, size)] / 2))
+                                    + " ");
+                        System.out.println();
+                    }
                     System.out.println();
                 }
-                System.out.println();
             }
+
+
 
             System.out.println("I am doing forward Euler method");
             // perform forward Euler method
