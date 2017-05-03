@@ -11,6 +11,8 @@ public class Heat2D_mpi {
     private final static int tag = 0;
 
     public static int extra;                 // extra #rows allocated to some ranks
+    public static int avColsPerRank;
+    public static int myOffset = 0;
     int mtype;                 // message type (tagFromMaster or tagFromSlave )
 
 
@@ -36,8 +38,8 @@ public class Heat2D_mpi {
 	
 
 
-	int avColsPerRank = size / MPI.COMM_WORLD.Size();
-	int extra = size % MPI.COMM_WORLD.Size();	
+	avColsPerRank = size / MPI.COMM_WORLD.Size();
+	extra = size % MPI.COMM_WORLD.Size();
 	int colsPerRank[] = new int[MPI.COMM_WORLD.Size()];   // the actual # columns allocated to each rank.
 
 	for(int rank = 0; rank < MPI.COMM_WORLD.Size(); rank++) {
@@ -89,7 +91,7 @@ public class Heat2D_mpi {
 	int myNumCols = colsPerRank[myRank]; //Get my personal number of columns.
 
 	//now compute the offset each rank has from the start
-	int myOffset = 0;  //This is my offset until MY FIRST COLUMN. Additional work must be done to find the right-hand column.
+	//This is my offset until MY FIRST COLUMN. Additional work must be done to find the right-hand column.
 	for (int rank = 0; rank <= myRank; rank++) {    //namely, offset + (size * colsPerRank[myRank]) - size to get the start of the right hand column.
 	    myOffset += colsPerRank[rank] * size;
 	}
