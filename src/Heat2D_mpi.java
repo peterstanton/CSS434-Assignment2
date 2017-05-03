@@ -10,11 +10,7 @@ public class Heat2D_mpi {
     public static int myRank = 0;
     private final static int tag = 0;
 
-
-    public static int avecols;               // average #columns allocated to each rank
     public static int extra;                 // extra #rows allocated to some ranks
-    public static int offset[] = new int[1]; // offset in row
-    int cols[] = new int[1];   // the actual # columns allocated to each rank
     int mtype;                 // message type (tagFromMaster or tagFromSlave )
 
 
@@ -37,7 +33,17 @@ public class Heat2D_mpi {
         double r = a * dt / (dd * dd);
     
         int stripe = size / MPI.COMM_WORLD.Size();
-	int extra = size % MPI.COMM_WORLD.Size();
+	
+
+
+	int avColsPerRank = size / MPI.COMM_WORLD.Size();
+	int extra = size % MPI.COMM_WORLD.Size();	
+	int colsPerRank[] = new int[MPI.COMM_WORLD.Size()];   // the actual # columns allocated to each rank.
+
+	for(int rank = 0; rank < MPI.COMM_WORLD.Size(); rank++) {
+	     colsPerRank[rank] = 0;
+	     colsPerRank[rank] = avColsPerRank;	
+	}
 
 
         if ( MPI.COMM_WORLD.Rank( ) == 0 ) { // master
@@ -66,8 +72,28 @@ public class Heat2D_mpi {
 
 	double[] heatTable = new double[2 * size * size];
 
-	    avecols = stripe;
-	    offset[0] = 0;
+
+	if (extra != 0) {
+	    int rank = 0;
+	    for(;;) {
+	        if (extra == 0) {
+			break;
+		}
+                else {
+		    colsPerRank[rank]++;
+		    extra--;
+		    rank++;
+		}
+	    }
+	}
+	int myNumCols = colsPerRank[myRank];
+
+	//now compute the offset each rank has from the start
+	int myOffset = 0;  //This is my offset until MY FIRST COLUMN. Additional work must be done to find the right-hand column.
+	for (int rank = 0; rank <= myRank; rank++) {    //namely, offset + (size * colsPerRank[myRank]) - size to get the start of the right hand column.
+	    myOffset += colsPerRank[rank] * size;
+	}
+
 
 	/*if (extra != 0) {
 	    for (int i = extra; extra >= 0; i--}
@@ -97,16 +123,18 @@ public class Heat2D_mpi {
                     heatTable[indexer(p,x,0,size)] = 19.0; // heat
             }
 
-            //need to exchange edges now.
+            //need to exchange edges now.  KEEP WORKING FROM HERE, PETER
 
             for (int rank = 0; rank < MPI.COMM_WORLD.Size(); rank += 2) {
                 if (MPI.COMM_WORLD.Rank() != 0) {
                     MPI.COMM_WORLD.Send(heatTable, (avecols*(myRank-1)*size)+1, stripe*size, MPI.DOUBLE, myRank-1,tag);
+		//I need an if to stop rank N-1 from receiving from outside the square.
 		    MPI.COMM_WORLD.Recv(heatTable, (avecols*(myRank-1)*size)+1, stripe*size, MPI.DOUBLE, myRank+1,tag); 
 			
                 }
                 if (MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1) {
                     MPI.COMM_WORLD.Send(heatTable, avecols*myRank*size, stripe*size, MPI.DOUBLE, myRank+1,tag);
+		//I need an if to stop rank 0 from receiving from outside the square.
 		    MPI.COMM_WORLD.Recv(heatTable, avecols*myRank*size, stripe*size, MPI.DOUBLE, myRank-1, tag);
                 }
             }
