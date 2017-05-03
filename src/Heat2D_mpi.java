@@ -70,23 +70,23 @@ public class Heat2D_mpi {
          }
 
 
-	double[] heatTable = new double[2 * size * size];
+	double[] heatTable = new double[2 * size * size];  //this is our 1D computation space.
 
 
 	if (extra != 0) {
 	    int rank = 0;
 	    for(;;) {
 	        if (extra == 0) {
-			break;
-		}
-                else {
-		    colsPerRank[rank]++;
-		    extra--;
-		    rank++;
-		}
+			    break;
+		    }
+		    else {
+		        colsPerRank[rank]++;
+		        extra--;
+		        rank++;
+		    }
 	    }
 	}
-	int myNumCols = colsPerRank[myRank];
+	int myNumCols = colsPerRank[myRank]; //Get my personal number of columns.
 
 	//now compute the offset each rank has from the start
 	int myOffset = 0;  //This is my offset until MY FIRST COLUMN. Additional work must be done to find the right-hand column.
