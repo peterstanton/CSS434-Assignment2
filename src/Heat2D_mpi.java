@@ -199,11 +199,11 @@ public class Heat2D_mpi {
                     MPI.COMM_WORLD.Send(size*size + myOffset,0,1,MPI.INT,0,tag);
                     MPI.COMM_WORLD.Send(heatTable, ((size * size) + myOffset), myNumCols * size, MPI.DOUBLE, 0, tag);
                 }
-                System.out.println("Master has gotten all the information on round " + t);
+                System.out.println("Master is now going to get all the information on round " + t);
                 //move printing code in here.
                 if (MPI.COMM_WORLD.Rank() == 0) {
                     for (int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
-                        System.out.println("It is time to print");
+                        System.out.println("It is time to get");
                         int incomingOffset = 0;
                         MPI.COMM_WORLD.Recv(incomingOffset,0,1,MPI.INT,rank,tag);
                         if (p == 0||p==1) {  //Master node needs to see the incoming offset.
