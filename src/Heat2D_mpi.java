@@ -127,6 +127,10 @@ public class Heat2D_mpi {
 
             //need to exchange edges now.  KEEP WORKING FROM HERE. Rewrite all the offsets.
             //shit, I need to account for P in here, to do the right square, don't I?
+            //receiving
+
+            //should I send to the left, receive on the right? Yeah, I should, shouldn't I?
+            //but then I'll have to store the right to send that, then receive on the left.
 
             if (p==0) {
                 for (int rank = 0; rank < MPI.COMM_WORLD.Size(); rank += 2) {
@@ -142,7 +146,7 @@ public class Heat2D_mpi {
                         MPI.COMM_WORLD.Send(heatTable, myOffset + (myNumCols * size) - size, size, MPI.DOUBLE, myRank + 1, tag);
                         //I need an if to stop rank 0 from receiving from outside the square.
                         if (MPI.COMM_WORLD.Rank() != 0) {
-                            MPI.COMM_WORLD.Recv(heatTable, myOffset, size, MPI.DOUBLE, myRank - 1, tag);
+                            MPI.COMM_WORLD.Recv(heatTable, myOffset + (myNumCols * size) - size, size, MPI.DOUBLE, myRank - 1, tag);
                         }
                     }
                 }
