@@ -188,7 +188,7 @@ public class Heat2D_mpi {
             //just have the damn rank send their own offsets first.
             if (interval != 0 &&
                     (t % interval == 0 || t == max_time - 1)) {
-
+                System.out.println("Printing acceptability achieved on round " + t);
                 if (MPI.COMM_WORLD.Rank() != 0) {
                     if (p == 0)
                         MPI.COMM_WORLD.Send(myOffset,0,1,MPI.INT,0,tag);
