@@ -184,7 +184,7 @@ public class Heat2D_mpi {
                     }
                 }
             }
-            System.out.println("I have exited boundaries exchange");
+            System.out.println("I have exited boundaries exchange for square " + p + "in iteration " + t);
             // display intermediate results //need to send stuff from ranks back to rank 0.
             //just have the damn rank send their own offsets first.
             if (interval != 0 &&
@@ -232,6 +232,7 @@ public class Heat2D_mpi {
                             r * (heatTable[indexer(p, x, y + 1, size)] - 2 * heatTable[indexer(p, x, y, size)] + heatTable[indexer(p, x, y - 1, size)]);
                 } // end of simulation
             }
+            System.out.println("I am finishing the round for iteration" + t);
         }
 
 
