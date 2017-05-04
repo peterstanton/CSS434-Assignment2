@@ -93,21 +93,17 @@ public class Heat2D_mpi {
 
 	//now compute the offset each rank has from the start
 	//This is my offset until MY FIRST COLUMN. Additional work must be done to find the right-hand column.
-	for (int rank = 0; rank <= myRank; rank++) {    //namely, offset + (size * colsPerRank[myRank]) - size to get the start of the right hand column.
+	for (int rank = 0; rank < myRank; rank++) {    //namely, offset + (size * colsPerRank[myRank]) - size to get the start of the right hand column.
 	    myOffset += colsPerRank[rank] * size;
 	}
 	System.out.println("My internal offset found");
-
-
-	/*if (extra != 0) {
-	    for (int i = extra; extra >= 0; i--}
-	}*/
+	System.out.println("My offset is: " + myOffset + " on rank " + MPI.COMM_WORLD.Rank());
 
         // simulate heat diffusion
         for ( int t = 0; t < max_time; t++ ) {
             int p = t % 2; // p = 0 or 1: indicates the phase
 
-            System.out.println("I am simulating heat diffusion for round" + t);
+            //System.out.println("I am simulating heat diffusion for round" + t);
 
             // two left-most and two right-most columns are identical
             for (int y = 0; y < size; y++) {
@@ -129,8 +125,107 @@ public class Heat2D_mpi {
             //should I send to the left, receive on the right? Yeah, I should, shouldn't I?
             //but then I'll have to store the right to send that, then receive on the left.
 
-            System.out.println("I have reached boundaries exchange.");
-            double[] rightTemp = new double[size];
+		System.out.println("We are about to exchange on rank " + MPI.COMM_WORLD.Rank() + " iteration " + t);
+
+
+	        if(MPI.COMM_WORLD.Rank() % 2 == 0) { //even ranks
+		     if(MPI.COMM_WORLD.Rank() != 0) {
+		         MPI.COMM_WORLD.Send(heatTable,(p*(size*size)) + myOffset,size,MPI.DOUBLE,MPI.COMM_WORLD.Rank() - 1, tag); //send to the left
+		     }
+		     if(MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1){
+		         MPI.COMM_WORLD.Send(heatTable, (p*(size*size)) + myOffset + (myNumCols*size)-size, size,MPI.DOUBLE,MPI.COMM_WORLD.Rank() + 1, tag); //send to right
+		     }
+		     if(MPI.COMM_WORLD.Rank() != 0) {
+			MPI.COMM_WORLD.Recv(heatTable, (p*(size*size)) + myOffset, size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() - 1, tag); //receive left
+		     }
+		     if(MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1) {
+		         MPI.COMM_WORLD.Recv(heatTable,(p*(size*size)) + myOffset+(myNumCols*size)-size, size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() +1,tag); //receive right
+		     }
+		}
+		else if(MPI.COMM_WORLD.Rank() % 2 == 1) { //odd ranks
+	             if(MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1) {
+		         MPI.COMM_WORLD.Recv(heatTable,(p*(size*size)) + myOffset+(myNumCols*size)-size, size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() +1,tag); //receive right
+		     } 
+		     if(MPI.COMM_WORLD.Rank() != 0) {
+			MPI.COMM_WORLD.Recv(heatTable,(p*(size*size)) + myOffset, size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() - 1, tag); //receive left
+		     }
+		     if(MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1){
+		         MPI.COMM_WORLD.Send(heatTable,(p*(size*size)) + myOffset+(myNumCols*size)-size, size,MPI.DOUBLE,MPI.COMM_WORLD.Rank() + 1, tag); //send to right
+		     }
+		     if(MPI.COMM_WORLD.Rank() != 0){
+		         MPI.COMM_WORLD.Send(heatTable,(p*(size*size)) + myOffset,size,MPI.DOUBLE,MPI.COMM_WORLD.Rank() - 1, tag); //send to the left
+		     }
+		}
+
+            System.out.println("I have exited boundaries exchange for square " + p + " in iteration " + t + " for rank " + MPI.COMM_WORLD.Rank());
+            // display intermediate results //need to send stuff from ranks back to rank 0.
+            //just have the damn rank send their own offsets first.
+            if (interval != 0 &&
+                    (t % interval == 0 || t == max_time - 1)) {
+                System.out.println("Printing acceptability achieved on round " + t + " in rank " + MPI.COMM_WORLD.Rank());
+                if (MPI.COMM_WORLD.Rank() != 0) {
+                    if (p == 0)
+                        System.out.println("Sending information to Master on round " + t + " from square " + p + " from rank " + MPI.COMM_WORLD.Rank());
+                        MPI.COMM_WORLD.Send(myOffset,0,1,MPI.INT,0,tag);
+                        MPI.COMM_WORLD.Send(heatTable, myOffset, myNumCols*size, MPI.DOUBLE, 0, tag);
+                	} else {
+                    		System.out.println("Sending information to Master on round " + t + " from square " + p + " from rank " + MPI.COMM_WORLD.Rank());
+                    		MPI.COMM_WORLD.Send(size*size + myOffset,0,1,MPI.INT,0,tag);
+                    		MPI.COMM_WORLD.Send(heatTable, ((size * size) + myOffset), myNumCols * size, MPI.DOUBLE, 0, tag);
+                }
+                System.out.println("Master is now going to get all the information on round " + t + " from rank " + MPI.COMM_WORLD.Rank());
+                System.out.println("Okay, the rank is " + MPI.COMM_WORLD.Rank( ));
+                if (MPI.COMM_WORLD.Rank( ) == 0) { //SO FAR THE RANK ALWAYS IS 3, NEVER 0?
+                    System.out.println("It is time to get");  //PROGRAM NEVER GETS HERE
+                    for (int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
+                        int incomingOffset = 0;
+                        MPI.COMM_WORLD.Recv(incomingOffset,0,1,MPI.INT,rank,tag);
+                        if (p == 0||p==1) {  //Master node needs to see the incoming offset.
+                            MPI.COMM_WORLD.Recv(heatTable, incomingOffset, stripe * size, MPI.DOUBLE, rank, tag);
+                        } /*else {
+                        MPI.COMM_WORLD.Recv(heatTable, ((size * size) + (rank * stripe) * size), stripe * size, MPI.DOUBLE, rank, tag);
+                    }*/
+                    }
+                    System.out.println("time = " + t);
+
+                    for (int y = 0; y < size; y++) {
+                        for (int x = 0; x < size; x++)
+                            System.out.print((int) (Math.floor(heatTable[indexer(p, x, y, size)] / 2))
+                                    + " ");
+                        System.out.println();
+                    }
+                    System.out.println();
+                }
+            }
+
+
+
+            System.out.println("I am doing forward Euler method on rank " + MPI.COMM_WORLD.Rank() + " on iteration " + t);
+            // perform forward Euler method
+            int p2 = (p + 1) % 2;
+            for (int x = 1; x < size - 1; x++) {
+                for (int y = 1; y < size - 1; y++) {
+                    heatTable[indexer(p2, x, y, size)] = heatTable[indexer(p, x, y, size)] +
+                            r * (heatTable[indexer(p, x + 1, y, size)] - 2 * heatTable[indexer(p, x, y, size)] + heatTable[indexer(p, x - 1, y, size)]) +
+                            r * (heatTable[indexer(p, x, y + 1, size)] - 2 * heatTable[indexer(p, x, y, size)] + heatTable[indexer(p, x, y - 1, size)]);
+                } // end of simulation
+            }
+            System.out.println("I am finishing the round for iteration" + t + " for rank " + MPI.COMM_WORLD.Rank());
+        }
+
+
+        // finish the timer
+        Date endTime = new Date( );
+        //System.out.println("Elapsed time = " + ( endTime.getTime( ) - startTime.getTime( ) ) );
+
+MPI.Finalize( );
+    }
+
+}
+
+
+
+/*
             if (p==0) {
                 for (int rank = 0; rank < MPI.COMM_WORLD.Size(); rank += 2) {
                     if (MPI.COMM_WORLD.Rank() != 0) {
@@ -179,69 +274,5 @@ public class Heat2D_mpi {
                     }
                 }
             }
-            System.out.println("I have exited boundaries exchange for square " + p + "in iteration " + t);
-            // display intermediate results //need to send stuff from ranks back to rank 0.
-            //just have the damn rank send their own offsets first.
-            if (interval != 0 &&
-                    (t % interval == 0 || t == max_time - 1)) {
-                System.out.println("Printing acceptability achieved on round " + t);
-                if (MPI.COMM_WORLD.Rank() != 0) {
-                    if (p == 0)
-                        System.out.println("Sending information to Master on round " + t + "from square " + p);
-                        MPI.COMM_WORLD.Send(myOffset,0,1,MPI.INT,0,tag);
-                        MPI.COMM_WORLD.Send(heatTable, myOffset, myNumCols*size, MPI.DOUBLE, 0, tag);
-                } else {
-                    System.out.println("Sending information to Master on round " + 5 + "from square " + p);
-                    MPI.COMM_WORLD.Send(size*size + myOffset,0,1,MPI.INT,0,tag);
-                    MPI.COMM_WORLD.Send(heatTable, ((size * size) + myOffset), myNumCols * size, MPI.DOUBLE, 0, tag);
-                }
-                System.out.println("Master is now going to get all the information on round " + t);
-                System.out.println("Okay, the rank is " + MPI.COMM_WORLD.Rank( ));
-                if (MPI.COMM_WORLD.Rank( ) == 0) { //SO FAR THE RANK ALWAYS IS 3, NEVER 0?
-                    System.out.println("It is time to get");  //PROGRAM NEVER GETS HERE
-                    for (int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
-                        int incomingOffset = 0;
-                        MPI.COMM_WORLD.Recv(incomingOffset,0,1,MPI.INT,rank,tag);
-                        if (p == 0||p==1) {  //Master node needs to see the incoming offset.
-                            MPI.COMM_WORLD.Recv(heatTable, incomingOffset, stripe * size, MPI.DOUBLE, rank, tag);
-                        } /*else {
-                        MPI.COMM_WORLD.Recv(heatTable, ((size * size) + (rank * stripe) * size), stripe * size, MPI.DOUBLE, rank, tag);
-                    }*/
-                    }
-                    System.out.println("time = " + t);
-
-                    for (int y = 0; y < size; y++) {
-                        for (int x = 0; x < size; x++)
-                            System.out.print((int) (Math.floor(heatTable[indexer(p, x, y, size)] / 2))
-                                    + " ");
-                        System.out.println();
-                    }
-                    System.out.println();
-                }
-            }
-
-
-
-            System.out.println("I am doing forward Euler method");
-            // perform forward Euler method
-            int p2 = (p + 1) % 2;
-            for (int x = 1; x < size - 1; x++) {
-                for (int y = 1; y < size - 1; y++) {
-                    heatTable[indexer(p2, x, y, size)] = heatTable[indexer(p, x, y, size)] +
-                            r * (heatTable[indexer(p, x + 1, y, size)] - 2 * heatTable[indexer(p, x, y, size)] + heatTable[indexer(p, x - 1, y, size)]) +
-                            r * (heatTable[indexer(p, x, y + 1, size)] - 2 * heatTable[indexer(p, x, y, size)] + heatTable[indexer(p, x, y - 1, size)]);
-                } // end of simulation
-            }
-            System.out.println("I am finishing the round for iteration" + t);
-        }
-
-
-        // finish the timer
-        Date endTime = new Date( );
-        //System.out.println("Elapsed time = " + ( endTime.getTime( ) - startTime.getTime( ) ) );
-
-MPI.Finalize( );
-    }
-
-}
+*/
 
