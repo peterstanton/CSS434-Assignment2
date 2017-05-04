@@ -189,8 +189,9 @@ public class Heat2D_mpi {
 
             // perform forward Euler method
             int p2 = (p + 1) % 2;
+
             for (int x = 1; x < size - 1; x++) {
-                for (int y = 1; y < size - 1; y++) {
+                for (int y = colsUntilMe; y < myNumCols - 1; y++) {
                     heatTable[indexer(p2, x, y, size)] = heatTable[indexer(p, x, y, size)] +
                             r * (heatTable[indexer(p, x + 1, y, size)] - 2 * heatTable[indexer(p, x, y, size)] + heatTable[indexer(p, x - 1, y, size)]) +
                             r * (heatTable[indexer(p, x, y + 1, size)] - 2 * heatTable[indexer(p, x, y, size)] + heatTable[indexer(p, x, y - 1, size)]);
