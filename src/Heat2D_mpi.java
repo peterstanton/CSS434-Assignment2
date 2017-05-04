@@ -15,6 +15,8 @@ public class Heat2D_mpi {
     public static int myOffset = 0;
     int mtype;                 // message type (tagFromMaster or tagFromSlave )
 
+    public static int colsUntilMe = 0;
+
 
     public static int indexer(int p, int x, int y, int size) {
         return p * size * size + x * size + y;
@@ -93,7 +95,9 @@ public class Heat2D_mpi {
 	//This is my offset until MY FIRST COLUMN. Additional work must be done to find the right-hand column.
 	for (int rank = 0; rank < myRank; rank++) {    //namely, offset + (size * colsPerRank[myRank]) - size to get the start of the right hand column.
 	    myOffset += colsPerRank[rank] * size;
+	    colsUntilMe += colsPerRank[rank];
 	}
+	colsUntilMe++;
 
         // simulate heat diffusion
         for ( int t = 0; t < max_time; t++ ) {
@@ -152,8 +156,8 @@ public class Heat2D_mpi {
 		     }
 		}
 
+
             // display intermediate results //need to send stuff from ranks back to rank 0.
-            //just have the damn rank send their own offsets first.
             if (interval != 0 &&
                     (t % interval == 0 || t == max_time - 1)) {
                 if (MPI.COMM_WORLD.Rank() != 0) {
@@ -165,18 +169,14 @@ public class Heat2D_mpi {
                         MPI.COMM_WORLD.Send(heatTable, ((size * size) + myOffset), myNumCols * size, MPI.DOUBLE, 0, tag);
                     }
                 }
-                if (MPI.COMM_WORLD.Rank( ) == 0) { //SO FAR THE RANK ALWAYS IS 3, NEVER 0?
+                if (MPI.COMM_WORLD.Rank( ) == 0) {
                     for (int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
                         int incomingOffset = 0;
                         MPI.COMM_WORLD.Recv(incomingOffset,0,1,MPI.INT,rank,tag);
-                        if (p == 0||p==1) {  //Master node needs to see the incoming offset.
-                            MPI.COMM_WORLD.Recv(heatTable, incomingOffset, stripe * size, MPI.DOUBLE, rank, tag);
-                        } /*else {
-                        MPI.COMM_WORLD.Recv(heatTable, ((size * size) + (rank * stripe) * size), stripe * size, MPI.DOUBLE, rank, tag);
-                    }*/
+			//Master node needs to see the incoming offset.
+                        MPI.COMM_WORLD.Recv(heatTable, incomingOffset, stripe * size, MPI.DOUBLE, rank, tag);
                     }
                     System.out.println("time = " + t);
-
                     for (int y = 0; y < size; y++) {
                         for (int x = 0; x < size; x++)
                             System.out.print((int) (Math.floor(heatTable[indexer(p, x, y, size)] / 2))
@@ -187,8 +187,6 @@ public class Heat2D_mpi {
                 }
             }
 
-
-
             // perform forward Euler method
             int p2 = (p + 1) % 2;
             for (int x = 1; x < size - 1; x++) {
@@ -196,9 +194,9 @@ public class Heat2D_mpi {
                     heatTable[indexer(p2, x, y, size)] = heatTable[indexer(p, x, y, size)] +
                             r * (heatTable[indexer(p, x + 1, y, size)] - 2 * heatTable[indexer(p, x, y, size)] + heatTable[indexer(p, x - 1, y, size)]) +
                             r * (heatTable[indexer(p, x, y + 1, size)] - 2 * heatTable[indexer(p, x, y, size)] + heatTable[indexer(p, x, y - 1, size)]);
-                } // end of simulation
+                } 
             }
-        }
+        }// end of simulation
 
 
         // finish the timer
