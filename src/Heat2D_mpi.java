@@ -164,14 +164,15 @@ public class Heat2D_mpi {
                     (t % interval == 0 || t == max_time - 1)) {
                 System.out.println("Printing acceptability achieved on round " + t + " in rank " + MPI.COMM_WORLD.Rank());
                 if (MPI.COMM_WORLD.Rank() != 0) {
-                    if (p == 0)
+                    if (p == 0) {
                         System.out.println("Sending information to Master on round " + t + " from square " + p + " from rank " + MPI.COMM_WORLD.Rank());
-                        MPI.COMM_WORLD.Send(myOffset,0,1,MPI.INT,0,tag);
-                        MPI.COMM_WORLD.Send(heatTable, myOffset, myNumCols*size, MPI.DOUBLE, 0, tag);
-                	} else {
-                    		System.out.println("Sending information to Master on round " + t + " from square " + p + " from rank " + MPI.COMM_WORLD.Rank());
-                    		MPI.COMM_WORLD.Send(size*size + myOffset,0,1,MPI.INT,0,tag);
-                    		MPI.COMM_WORLD.Send(heatTable, ((size * size) + myOffset), myNumCols * size, MPI.DOUBLE, 0, tag);
+                        MPI.COMM_WORLD.Send(myOffset, 0, 1, MPI.INT, 0, tag);
+                        MPI.COMM_WORLD.Send(heatTable, myOffset, myNumCols * size, MPI.DOUBLE, 0, tag);
+                    } else {
+                        System.out.println("Sending information to Master on round " + t + " from square " + p + " from rank " + MPI.COMM_WORLD.Rank());
+                        MPI.COMM_WORLD.Send(size * size + myOffset, 0, 1, MPI.INT, 0, tag);
+                        MPI.COMM_WORLD.Send(heatTable, ((size * size) + myOffset), myNumCols * size, MPI.DOUBLE, 0, tag);
+                    }
                 }
                 System.out.println("Master is now going to get all the information on round " + t + " from rank " + MPI.COMM_WORLD.Rank());
                 System.out.println("Okay, the rank is " + MPI.COMM_WORLD.Rank( ));
