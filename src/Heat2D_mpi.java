@@ -60,31 +60,32 @@ public class Heat2D_mpi {
 
             // create a space
             double[][][] z = new double[2][size][size];
-            for (int p = 0; p < 2; p++)
-                for (int x = 0; x < size; x++)
-                    for (int y = 0; y < size; y++)
+            for (int p = 0; p < 2; p++) {
+                for (int x = 0; x < size; x++) {
+                    for (int y = 0; y < size; y++) {
                         z[p][x][y] = 0.0; // no heat or cold
-
-
+                    }
+                }
+            }
             // start a timer
             Date startTime = new Date();
-
          }
 
     System.out.println("Rank" + MPI.COMM_WORLD.Rank() + " is the master");
+	System.out.println("The size of this cluster is " + MPI.COMM_WORLD.Size());
 	double[] heatTable = new double[2 * size * size];  //this is our 1D computation space.
 
 
-	if (extra != 0) {
+	if (extra != 0) {  //if we have orphaned columns. 
 	    int rank = 0;
 	    for(;;) {
-	        if (extra == 0) {
+	        if (extra == 0) {  //if we are out of orphan columns
 			    break;
 		    }
 		    else {
-		        colsPerRank[rank]++;
-		        extra--;
-		        rank++;
+		        colsPerRank[rank]++; //rank adopts a column
+		        extra--; //orphaned columns decremented
+		        rank++; //move up to the next rank.
 		    }
 	    }
 	}
@@ -124,10 +125,6 @@ public class Heat2D_mpi {
                 for (int x = size / 3; x < size / 3 * 2; x++)
                     heatTable[indexer(p, x, 0, size)] = 19.0; // heat
             }
-
-            //need to exchange edges now.  KEEP WORKING FROM HERE. Rewrite all the offsets.
-            //shit, I need to account for P in here, to do the right square, don't I?
-            //receiving
 
             //should I send to the left, receive on the right? Yeah, I should, shouldn't I?
             //but then I'll have to store the right to send that, then receive on the left.
@@ -199,10 +196,9 @@ public class Heat2D_mpi {
                     MPI.COMM_WORLD.Send(heatTable, ((size * size) + myOffset), myNumCols * size, MPI.DOUBLE, 0, tag);
                 }
                 System.out.println("Master is now going to get all the information on round " + t);
-                //move printing code in here.
                 System.out.println("Okay, the rank is " + MPI.COMM_WORLD.Rank( ));
-                if (MPI.COMM_WORLD.Rank( ) == 0) {
-                    System.out.println("It is time to get");  //program never gets here.
+                if (MPI.COMM_WORLD.Rank( ) == 0) { //SO FAR THE RANK ALWAYS IS 3, NEVER 0?
+                    System.out.println("It is time to get");  //PROGRAM NEVER GETS HERE
                     for (int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
                         int incomingOffset = 0;
                         MPI.COMM_WORLD.Recv(incomingOffset,0,1,MPI.INT,rank,tag);
