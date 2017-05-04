@@ -1,0 +1,96 @@
+stantp2@uw1-320-03p:~$ CSSmpdboot 
+Preparing...
+Starting Master's mpd Process...
+Starting node: uw1-320-10.uwb.edu
+uw1-320-10_33155: conn error in connect_rhs: Connection refused
+Starting node: uw1-320-14.uwb.edu
+uw1-320-10_33155 (connect_rhs 979): failed to connect to rhs at 127.0.1.1 39952
+uw1-320-10_33155 (enter_ring 886): rhs connect failed
+uw1-320-10_33155 (run 267): failed to enter ring
+uw1-320-03p_39952 (handle_rhs_input 1238): lost rhs; re-entering ring
+Starting node: uw1-320-13.uwb.edu
+uw1-320-03p_39952 (reenter_ring 843): reenter_ring rc=0 after numTries=1
+uw1-320-03p_39952 (handle_rhs_input 1243): back in ring
+uw1-320-14_33711: conn error in connect_rhs: Connection refused
+Cluster built:
+uw1-320-14_33711 (connect_rhs 979): failed to connect to rhs at 127.0.1.1 39952
+uw1-320-14_33711 (enter_ring 886): rhs connect failed
+uw1-320-14_33711 (run 267): failed to enter ring
+uw1-320-03p_39952 (handle_rhs_input 1238): lost rhs; re-entering ring
+uw1-320-03p_39952 (reenter_ring 843): reenter_ring rc=0 after numTries=1
+uw1-320-03p_39952 (handle_rhs_input 1243): back in ring
+mpdtrace (mpdtrace 57): got eof on console
+CSSmpdboot finished!
+stantp2@uw1-320-03p:~$ uw1-320-13_41589: conn error in connect_rhs: Connection refused
+uw1-320-13_41589 (connect_rhs 979): failed to connect to rhs at 127.0.1.1 39952
+uw1-320-13_41589 (enter_ring 886): rhs connect failed
+uw1-320-13_41589 (run 267): failed to enter ring
+uw1-320-03p_39952 (handle_rhs_input 1238): lost rhs; re-entering ring
+uw1-320-03p_39952 (reenter_ring 843): reenter_ring rc=0 after numTries=1
+uw1-320-03p_39952 (handle_rhs_input 1243): back in ring
+ls
+Arg.class  CSS342  CSS434   Documents  Heat2D.class  Heat2D_mpi.class  Heat2D_mpi.jig	 mpd.hosts   mpi_setup.txt  out4.txt  Pictures	Templates
+Arg.java   CSS343  Desktop  Downloads  Heat2D.java   Heat2D_mpi.java   measurements.txt  mpd.hosts~  Music	    output    Public	Videos
+stantp2@uw1-320-03p:~$ ls
+Arg.class  CSS342  CSS434   Documents  Heat2D.class  Heat2D_mpi.class  Heat2D_mpi.jig	 mpd.hosts   mpi_setup.txt  out4.txt  Pictures	Templates
+Arg.java   CSS343  Desktop  Downloads  Heat2D.java   Heat2D_mpi.java   measurements.txt  mpd.hosts~  Music	    output    Public	Videos
+stantp2@uw1-320-03p:~$ prunjava Heat2D_mpi 100 3000 2700 500 
+prunjava: command not found
+stantp2@uw1-320-03p:~$ prunjava 3 Heat2D_mpi 100 3000 2700 500 > out4.txt
+prunjava: command not found
+stantp2@uw1-320-03p:~$ mpdallexit
+stantp2@uw1-320-03p:~$ CSSmpdboot -n 3 -v
+Preparing...
+Starting Master's mpd Process...
+Starting node: uw1-320-10.uwb.edu
+uw1-320-10_43215: conn error in connect_rhs: Connection refused
+Starting node: uw1-320-14.uwb.edu
+uw1-320-10_43215 (connect_rhs 979): failed to connect to rhs at 127.0.1.1 36788
+uw1-320-10_43215 (enter_ring 886): rhs connect failed
+uw1-320-10_43215 (run 267): failed to enter ring
+uw1-320-03p_36788 (handle_rhs_input 1238): lost rhs; re-entering ring
+Starting node: uw1-320-13.uwb.edu
+uw1-320-03p_36788 (reenter_ring 843): reenter_ring rc=0 after numTries=1
+uw1-320-03p_36788 (handle_rhs_input 1243): back in ring
+uw1-320-14_46791: conn error in connect_rhs: Connection refused
+Cluster built:
+uw1-320-14_46791 (connect_rhs 979): failed to connect to rhs at 127.0.1.1 36788
+uw1-320-14_46791 (enter_ring 886): rhs connect failed
+uw1-320-14_46791 (run 267): failed to enter ring
+uw1-320-03p_36788 (handle_rhs_input 1238): lost rhs; re-entering ring
+uw1-320-03p_36788 (reenter_ring 843): reenter_ring rc=0 after numTries=1
+uw1-320-03p_36788 (handle_rhs_input 1243): back in ring
+uw1-320-13_44293: conn error in connect_rhs: Connection refused
+uw1-320-13_44293 (connect_rhs 979): failed to connect to rhs at 127.0.1.1 36788
+uw1-320-13_44293 (enter_ring 886): rhs connect failed
+uw1-320-13_44293 (run 267): failed to enter ring
+uw1-320-03p_36788 (handle_rhs_input 1238): lost rhs; re-entering ring
+uw1-320-03p_36788 (reenter_ring 843): reenter_ring rc=0 after numTries=1
+uw1-320-03p_36788 (handle_rhs_input 1243): back in ring
+mpdtrace (mpdtrace 57): got eof on console
+CSSmpdboot finished!
+stantp2@uw1-320-03p:~$ prunjava 3 Heat2D_mpi 100 3000 2700 500 > out4.txt
+prunjava: command not found
+stantp2@uw1-320-03p:~$ mpdallexit
+stantp2@uw1-320-03p:~$ ssh uw1-320-10
+Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-72-generic x86_64)
+Last login: Wed May  3 17:47:32 2017 from 172.21.198.63
+stantp2@uw1-320-10:~$ CSSmpdboot -n 3 -v
+Preparing...
+Starting Master's mpd Process...
+Starting node: uw1-320-10.uwb.edu
+An mpd is already running with console at /tmp/mpd2.console_stantp2 on uw1-320-10. 
+Start mpd with the -n option for a second mpd on same host.
+Starting node: uw1-320-14.uwb.edu
+Starting node: uw1-320-13.uwb.edu
+Cluster built:
+uw1-320-10_41032 (172.21.198.90)
+uw1-320-14_44293 (172.21.198.94)
+CSSmpdboot finished!
+stantp2@uw1-320-10:~$ prunjava 3 Heat2D_mpi 100 3000 2700 500 > out4.txt
+./Heat2D_mpi.jig: 45: ./Heat2D_mpi.jig: =/usr/apps/mpiJava-x86_64/lib:$: not found
+./Heat2D_mpi.jig: 45: ./Heat2D_mpi.jig: =/usr/apps/mpiJava-x86_64/lib:$: not found
+./Heat2D_mpi.jig: 45: ./Heat2D_mpi.jig: =/usr/apps/mpiJava-x86_64/lib:$: not found
+^C
+stantp2@uw1-320-10:~$ 
+
