@@ -199,7 +199,6 @@ public class Heat2D_mpi {
                     heatTable[indexer(p2, x, y, size)] = heatTable[indexer(p, x, y, size)] +
                             r * (heatTable[indexer(p, x + 1, y, size)] - 2 * heatTable[indexer(p, x, y, size)] + heatTable[indexer(p, x - 1, y, size)]) +
                             r * (heatTable[indexer(p, x, y + 1, size)] - 2 * heatTable[indexer(p, x, y, size)] + heatTable[indexer(p, x, y - 1, size)]);
-		   // System.out.println(heatTable[indexer(p2, x, y, size)]);
                 } 
             }
 
