@@ -92,16 +92,6 @@ public class Heat2D_mpi {
 			offsetPerRank[rank] += (colsPerRank[inRank] * size);
 		}
 	}
-	
-	if (myRank == 0) {
-		for(int i = 0; i < MPI.COMM_WORLD.Size(); i++) {
-			System.out.println("offset to rank  " + i + " is " + offsetPerRank[i]);
-		}
-	}
-
-
-
-	    //System.out.println("I am rank: " + myRank + "MPI says my rank is " + MPI.COMM_WORLD.Rank() + "There are this many columns until me: " + colsUntilMe + "My upper boundary will be " + ((colsUntilMe + myNumCols)-1));
 
         // simulate heat diffusion
         for ( int t = 0; t < max_time; t++ ) {
@@ -175,7 +165,6 @@ public class Heat2D_mpi {
 		int incomingOffset = 0;
                 if (MPI.COMM_WORLD.Rank( ) == 0) {
                     for (int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
-			System.out.println("I will place contribution from rank " + rank + " offset to " + offsetPerRank[rank]);
                         MPI.COMM_WORLD.Recv(heatTable, (p*size*size) + offsetPerRank[rank], colsPerRank[rank] * size, MPI.DOUBLE, rank, tag);
                     }
                     System.out.println("time = " + t);
@@ -191,6 +180,7 @@ public class Heat2D_mpi {
 
             // perform forward Euler method
             int p2 = (p + 1) % 2;
+	    //for (int x = 1; x < size - 1; x++) {
             for (int x = colsUntilMe; x <= ((colsUntilMe + myNumCols)-1); x++) {
 		if (x == 0||x == size - 1) {
 			continue;
