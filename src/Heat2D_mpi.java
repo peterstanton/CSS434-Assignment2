@@ -87,9 +87,11 @@ public class Heat2D_mpi {
 	    colsUntilMe += colsPerRank[rank];
 	}
 	int[] offsetPerRank = new int[MPI.COMM_WORLD.Size()];
+	int[] colsUntilRank = new int[MPI.COMM_WORLD.Size()];
 	for (int rank = 0; rank < MPI.COMM_WORLD.Size(); rank++) {
 		for(int inRank = 0; inRank < rank; inRank++) {
 			offsetPerRank[rank] += (colsPerRank[inRank] * size);
+            colsUntilRank[rank] += colsPerRank[inRank];
 		}
 	}
 
@@ -119,34 +121,32 @@ public class Heat2D_mpi {
             //should I send to the left, receive on the right? Yeah, I should, shouldn't I?
             //but then I'll have to store the right to send that, then receive on the left.
 
-
-
 	        if(MPI.COMM_WORLD.Rank() % 2 == 0) { //even ranks
-		     if(MPI.COMM_WORLD.Rank() != 0) {
-		         MPI.COMM_WORLD.Send(heatTable,(p*(size*size)) + myOffset, size,MPI.DOUBLE,MPI.COMM_WORLD.Rank() - 1, tag); //send to the left
+		     if(MPI.COMM_WORLD.Rank() != 0) {   //indexer(p, myNumCols, 0, size)
+		         MPI.COMM_WORLD.Send(heatTable,indexer(p, colsUntilMe, 0, size), size,MPI.DOUBLE,MPI.COMM_WORLD.Rank() - 1, tag); //send to the left
 		     }
 		     if(MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1){
-		         MPI.COMM_WORLD.Send(heatTable, (p*(size*size)) + myOffset + (myNumCols*size)-size, size,MPI.DOUBLE,MPI.COMM_WORLD.Rank() + 1, tag); //send to right
+		         MPI.COMM_WORLD.Send(heatTable, indexer(p, colsUntilMe+myNumCols - 1, 0, size), size,MPI.DOUBLE, myRank+1, tag); //send to right
 		     }
 		     if(MPI.COMM_WORLD.Rank() != 0) {
-			MPI.COMM_WORLD.Recv(heatTable, (p*(size*size)) + myOffset, size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() - 1, tag); //receive left
+			MPI.COMM_WORLD.Recv(heatTable, indexer(p, colsUntilMe - 1, 0,size), size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() - 1, tag); //receive left
 		     }
 		     if(MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1) {
-		         MPI.COMM_WORLD.Recv(heatTable,(p*(size*size)) + myOffset+(myNumCols*size)-size, size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() +1,tag); //receive right
+		         MPI.COMM_WORLD.Recv(heatTable,indexer(p,colsUntilMe+myNumCols - 1, 0, size ), size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() +1,tag); //receive right
 		     }
 		}
 		else if(MPI.COMM_WORLD.Rank() % 2 == 1) { //odd ranks
 	             if(MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1) {
-		         MPI.COMM_WORLD.Recv(heatTable,(p*(size*size)) + myOffset+(myNumCols*size)-size, size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() +1,tag); //receive right
+		         MPI.COMM_WORLD.Recv(heatTable,indexer(p,colsUntilMe+myNumCols - 1, 0, size ), size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() +1,tag); //receive right
 		     } 
 		     if(MPI.COMM_WORLD.Rank() != 0) {
-			MPI.COMM_WORLD.Recv(heatTable,(p*(size*size)) + myOffset, size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() - 1, tag); //receive left
+			MPI.COMM_WORLD.Recv(heatTable,indexer(p, colsUntilMe - 1, 0,size), size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() - 1, tag); //receive left
 		     }
 		     if(MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1){
-		         MPI.COMM_WORLD.Send(heatTable,(p*(size*size)) + myOffset+(myNumCols*size)-size, size, MPI.DOUBLE,MPI.COMM_WORLD.Rank() + 1, tag); //send to right
+		         MPI.COMM_WORLD.Send(heatTable,indexer(p, colsUntilMe+myNumCols - 1, 0, size), size, MPI.DOUBLE, myRank+1, tag); //send to right
 		     }
 		     if(MPI.COMM_WORLD.Rank() != 0){
-		         MPI.COMM_WORLD.Send(heatTable,(p*(size*size)) + myOffset, size, MPI.DOUBLE,MPI.COMM_WORLD.Rank() - 1, tag); //send to the left
+		         MPI.COMM_WORLD.Send(heatTable,indexer(p, colsUntilMe, 0, size), size, MPI.DOUBLE,MPI.COMM_WORLD.Rank() - 1, tag); //send to the left
 		     }
 		}
 
@@ -154,18 +154,12 @@ public class Heat2D_mpi {
             if (interval != 0 &&
                     (t % interval == 0 || t == max_time - 1)) {
                 if (MPI.COMM_WORLD.Rank() != 0) {
-                    if (p == 0) {
-                        //MPI.COMM_WORLD.Send(myOffset, 0, 1, MPI.INT, 0, tag);
-                        MPI.COMM_WORLD.Send(heatTable, myOffset, myNumCols * size, MPI.DOUBLE, 0, tag);
-                    } else {
-                        //MPI.COMM_WORLD.Send(size * size + myOffset, 0, 1, MPI.INT, 0, tag);
-                        MPI.COMM_WORLD.Send(heatTable, ((size * size) + myOffset), myNumCols * size, MPI.DOUBLE, 0, tag);
+                        MPI.COMM_WORLD.Send(heatTable, indexer(p,colsUntilMe,0,size), myNumCols * size, MPI.DOUBLE, 0, tag);
                     }
-                }
-		int incomingOffset = 0;
+
                 if (MPI.COMM_WORLD.Rank( ) == 0) {
                     for (int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
-                        MPI.COMM_WORLD.Recv(heatTable, (p*size*size) + offsetPerRank[rank], colsPerRank[rank] * size, MPI.DOUBLE, rank, tag);
+                        MPI.COMM_WORLD.Recv(heatTable, indexer(p,colsUntilRank[rank],0,size), colsPerRank[rank] * size, MPI.DOUBLE, rank, tag);
                     }
                     System.out.println("time = " + t);
                     for (int y = 0; y < size; y++) {
