@@ -2,6 +2,16 @@ import java.util.Date;
 import java.io.*;
 import mpi.*;
 
+/*
+Peter Stanton
+CSS 434
+5/5/2017
+Heat2D_mpi
+
+This program executes a heat diffusion simulation based on the parameter options made. Program executes on at least 1 node, 
+dividing the work as appropriate given a larger cluster
+*/
+
 
 public class Heat2D_mpi {
     private static double a = 1.0;  // heat speed
@@ -25,6 +35,7 @@ public class Heat2D_mpi {
 
 
     public static void main( String[] args ) throws MPIException {
+	Date startTime = new Date();
         // verify arguments
 	MPI.Init( args );
 	myRank = MPI.COMM_WORLD.Rank();
@@ -34,10 +45,6 @@ public class Heat2D_mpi {
         int interval = Integer.parseInt(args[4]);
 	
         double r = a * dt / (dd * dd);
-    
-        int stripe = size / MPI.COMM_WORLD.Size();
-	
-
 
 	avColsPerRank = size / MPI.COMM_WORLD.Size();
 	extra = size % MPI.COMM_WORLD.Size();
@@ -59,7 +66,7 @@ public class Heat2D_mpi {
                 System.exit(-1);
             }
             // start a timer
-            Date startTime = new Date();
+            
          }
 
 	double[] heatTable = new double[2 * size * size];  //this is our 1D computation space.
@@ -132,12 +139,12 @@ public class Heat2D_mpi {
 			MPI.COMM_WORLD.Recv(heatTable, indexer(p, colsUntilMe - 1, 0,size), size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() - 1, tag); //receive left
 		     }
 		     if(MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1) {
-		         MPI.COMM_WORLD.Recv(heatTable,indexer(p,colsUntilMe+myNumCols - 1, 0, size ), size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() +1,tag); //receive right
+		         MPI.COMM_WORLD.Recv(heatTable,indexer(p,colsUntilMe+myNumCols, 0, size ), size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() +1,tag); //receive right
 		     }
 		}
 		else if(MPI.COMM_WORLD.Rank() % 2 == 1) { //odd ranks
 	             if(MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1) {
-		         MPI.COMM_WORLD.Recv(heatTable,indexer(p,colsUntilMe+myNumCols - 1, 0, size ), size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() +1,tag); //receive right
+		         MPI.COMM_WORLD.Recv(heatTable,indexer(p,colsUntilMe+myNumCols, 0, size ), size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() +1,tag); //receive right
 		     } 
 		     if(MPI.COMM_WORLD.Rank() != 0) {
 			MPI.COMM_WORLD.Recv(heatTable,indexer(p, colsUntilMe - 1, 0,size), size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() - 1, tag); //receive left
@@ -192,11 +199,14 @@ public class Heat2D_mpi {
 
 
         // finish the timer
-        Date endTime = new Date( );
-        //System.out.println("Elapsed time = " + ( endTime.getTime( ) - startTime.getTime( ) ) );
 
+	if (myRank == 0) {
+        Date endTime = new Date( );
+        System.out.println("Elapsed time = " + ( endTime.getTime( ) - startTime.getTime( ) ) );
+	}
 MPI.Finalize( );
     }
+
 
 }
 
