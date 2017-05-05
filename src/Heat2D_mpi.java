@@ -123,30 +123,30 @@ public class Heat2D_mpi {
 
 	        if(MPI.COMM_WORLD.Rank() % 2 == 0) { //even ranks
 		     if(MPI.COMM_WORLD.Rank() != 0) {
-		         MPI.COMM_WORLD.Send(heatTable,(p*(size*size)) + myOffset,size,MPI.DOUBLE,MPI.COMM_WORLD.Rank() - 1, tag); //send to the left
+		         MPI.COMM_WORLD.Send(heatTable,(p*(size*size)) + myOffset, myNumCols*size,MPI.DOUBLE,MPI.COMM_WORLD.Rank() - 1, tag); //send to the left
 		     }
 		     if(MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1){
-		         MPI.COMM_WORLD.Send(heatTable, (p*(size*size)) + myOffset + (myNumCols*size)-size, size,MPI.DOUBLE,MPI.COMM_WORLD.Rank() + 1, tag); //send to right
+		         MPI.COMM_WORLD.Send(heatTable, (p*(size*size)) + myOffset + (myNumCols*size)-size, myNumCols*size,MPI.DOUBLE,MPI.COMM_WORLD.Rank() + 1, tag); //send to right
 		     }
 		     if(MPI.COMM_WORLD.Rank() != 0) {
-			MPI.COMM_WORLD.Recv(heatTable, (p*(size*size)) + myOffset, size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() - 1, tag); //receive left
+			MPI.COMM_WORLD.Recv(heatTable, (p*(size*size)) + myOffset, colsPerRank[myRank-1]*size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() - 1, tag); //receive left
 		     }
 		     if(MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1) {
-		         MPI.COMM_WORLD.Recv(heatTable,(p*(size*size)) + myOffset+(myNumCols*size)-size, size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() +1,tag); //receive right
+		         MPI.COMM_WORLD.Recv(heatTable,(p*(size*size)) + myOffset+(myNumCols*size)-size, colsPerRank[myRank+1]*size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() +1,tag); //receive right
 		     }
 		}
 		else if(MPI.COMM_WORLD.Rank() % 2 == 1) { //odd ranks
 	             if(MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1) {
-		         MPI.COMM_WORLD.Recv(heatTable,(p*(size*size)) + myOffset+(myNumCols*size)-size, size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() +1,tag); //receive right
+		         MPI.COMM_WORLD.Recv(heatTable,(p*(size*size)) + myOffset+(myNumCols*size)-size, colsPerRank[myRank+1]*size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() +1,tag); //receive right
 		     } 
 		     if(MPI.COMM_WORLD.Rank() != 0) {
-			MPI.COMM_WORLD.Recv(heatTable,(p*(size*size)) + myOffset, size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() - 1, tag); //receive left
+			MPI.COMM_WORLD.Recv(heatTable,(p*(size*size)) + myOffset, colsPerRank[myRank-1]*size, MPI.DOUBLE, MPI.COMM_WORLD.Rank() - 1, tag); //receive left
 		     }
 		     if(MPI.COMM_WORLD.Rank() != MPI.COMM_WORLD.Size() - 1){
-		         MPI.COMM_WORLD.Send(heatTable,(p*(size*size)) + myOffset+(myNumCols*size)-size, size,MPI.DOUBLE,MPI.COMM_WORLD.Rank() + 1, tag); //send to right
+		         MPI.COMM_WORLD.Send(heatTable,(p*(size*size)) + myOffset+(myNumCols*size)-size, myNumCols*size, MPI.DOUBLE,MPI.COMM_WORLD.Rank() + 1, tag); //send to right
 		     }
 		     if(MPI.COMM_WORLD.Rank() != 0){
-		         MPI.COMM_WORLD.Send(heatTable,(p*(size*size)) + myOffset,size,MPI.DOUBLE,MPI.COMM_WORLD.Rank() - 1, tag); //send to the left
+		         MPI.COMM_WORLD.Send(heatTable,(p*(size*size)) + myOffset, myNumCols*size, MPI.DOUBLE,MPI.COMM_WORLD.Rank() - 1, tag); //send to the left
 		     }
 		}
 
