@@ -187,8 +187,12 @@ public class Heat2D_mpi {
             }
 
             // perform forward Euler method
+	    System.out.println("I am rank: " + myRank);
+	    System.out.println("MPI says my rank is " + MPI.COMM_WORLD.Rank());
+	    System.out.println("There are this many columns until me: " + colsUntilMe);
+	    System.out.println("My upper boundary will be " + ((colsUntilMe + myNumCols)-1));
             int p2 = (p + 1) % 2;
-            for (int x = colsUntilMe+1; x < size-1; x++) {
+            for (int x = colsUntilMe; x < ((colsUntilMe + myNumCols)-1); x++) {
                 for (int y = 1; y < size - 1; y++) {
                     heatTable[indexer(p2, x, y, size)] = heatTable[indexer(p2, x, y, size)] +
                             r * (heatTable[indexer(p2, x + 1, y, size)] - 2 * heatTable[indexer(p2, x, y, size)] + heatTable[indexer(p2, x - 1, y, size)]) +
