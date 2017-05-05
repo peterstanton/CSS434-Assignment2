@@ -24,7 +24,6 @@ public class Heat2D_mpi {
 
 
 
-
     public static void main( String[] args ) throws MPIException {
         // verify arguments
 	MPI.Init( args );
@@ -59,16 +58,6 @@ public class Heat2D_mpi {
                                 "java Heat2D size max_time heat_time interval");
                 System.exit(-1);
             }
-
-            // create a space
-            double[][][] z = new double[2][size][size];
-            for (int p = 0; p < 2; p++) {
-                for (int x = 0; x < size; x++) {
-                    for (int y = 0; y < size; y++) {
-                        z[p][x][y] = 0.0; // no heat or cold
-                    }
-                }
-            }
             // start a timer
             Date startTime = new Date();
          }
@@ -97,6 +86,22 @@ public class Heat2D_mpi {
 	    myOffset += colsPerRank[rank] * size;
 	    colsUntilMe += colsPerRank[rank];
 	}
+	int[] offsetPerRank = new int[MPI.COMM_WORLD.Size()];
+	for (int rank = 0; rank < MPI.COMM_WORLD.Size(); rank++) {
+		for(int inRank = 0; inRank < rank; inRank++) {
+			offsetPerRank[rank] += (colsPerRank[inRank] * size);
+		}
+	}
+	
+	if (myRank == 0) {
+		for(int i = 0; i < MPI.COMM_WORLD.Size(); i++) {
+			System.out.println("offset to rank  " + i + " is " + offsetPerRank[i]);
+		}
+	}
+
+
+
+	    //System.out.println("I am rank: " + myRank + "MPI says my rank is " + MPI.COMM_WORLD.Rank() + "There are this many columns until me: " + colsUntilMe + "My upper boundary will be " + ((colsUntilMe + myNumCols)-1));
 
         // simulate heat diffusion
         for ( int t = 0; t < max_time; t++ ) {
@@ -155,25 +160,23 @@ public class Heat2D_mpi {
 		     }
 		}
 
-
             // display intermediate results //need to send stuff from ranks back to rank 0.
             if (interval != 0 &&
                     (t % interval == 0 || t == max_time - 1)) {
                 if (MPI.COMM_WORLD.Rank() != 0) {
                     if (p == 0) {
-                        MPI.COMM_WORLD.Send(myOffset, 0, 1, MPI.INT, 0, tag);
+                        //MPI.COMM_WORLD.Send(myOffset, 0, 1, MPI.INT, 0, tag);
                         MPI.COMM_WORLD.Send(heatTable, myOffset, myNumCols * size, MPI.DOUBLE, 0, tag);
                     } else {
-                        MPI.COMM_WORLD.Send(size * size + myOffset, 0, 1, MPI.INT, 0, tag);
+                        //MPI.COMM_WORLD.Send(size * size + myOffset, 0, 1, MPI.INT, 0, tag);
                         MPI.COMM_WORLD.Send(heatTable, ((size * size) + myOffset), myNumCols * size, MPI.DOUBLE, 0, tag);
                     }
                 }
+		int incomingOffset = 0;
                 if (MPI.COMM_WORLD.Rank( ) == 0) {
                     for (int rank = 1; rank < MPI.COMM_WORLD.Size(); rank++) {
-                        int incomingOffset = 0;
-                        MPI.COMM_WORLD.Recv(incomingOffset,0,1,MPI.INT,rank,tag);
-			//Master node needs to see the incoming offset.
-                        MPI.COMM_WORLD.Recv(heatTable, incomingOffset, colsPerRank[rank] * size, MPI.DOUBLE, rank, tag);
+			System.out.println("I will place contribution from rank " + rank + " offset to " + offsetPerRank[rank]);
+                        MPI.COMM_WORLD.Recv(heatTable, (p*size*size) + offsetPerRank[rank], colsPerRank[rank] * size, MPI.DOUBLE, rank, tag);
                     }
                     System.out.println("time = " + t);
                     for (int y = 0; y < size; y++) {
@@ -187,16 +190,16 @@ public class Heat2D_mpi {
             }
 
             // perform forward Euler method
-	    System.out.println("I am rank: " + myRank);
-	    System.out.println("MPI says my rank is " + MPI.COMM_WORLD.Rank());
-	    System.out.println("There are this many columns until me: " + colsUntilMe);
-	    System.out.println("My upper boundary will be " + ((colsUntilMe + myNumCols)-1));
             int p2 = (p + 1) % 2;
-            for (int x = colsUntilMe; x < ((colsUntilMe + myNumCols)-1); x++) {
+            for (int x = colsUntilMe; x <= ((colsUntilMe + myNumCols)-1); x++) {
+		if (x == 0||x == size - 1) {
+			continue;
+		}
                 for (int y = 1; y < size - 1; y++) {
-                    heatTable[indexer(p2, x, y, size)] = heatTable[indexer(p2, x, y, size)] +
-                            r * (heatTable[indexer(p2, x + 1, y, size)] - 2 * heatTable[indexer(p2, x, y, size)] + heatTable[indexer(p2, x - 1, y, size)]) +
-                            r * (heatTable[indexer(p2, x, y + 1, size)] - 2 * heatTable[indexer(p2, x, y, size)] + heatTable[indexer(p2, x, y - 1, size)]);
+                    heatTable[indexer(p2, x, y, size)] = heatTable[indexer(p, x, y, size)] +
+                            r * (heatTable[indexer(p, x + 1, y, size)] - 2 * heatTable[indexer(p, x, y, size)] + heatTable[indexer(p, x - 1, y, size)]) +
+                            r * (heatTable[indexer(p, x, y + 1, size)] - 2 * heatTable[indexer(p, x, y, size)] + heatTable[indexer(p, x, y - 1, size)]);
+		   // System.out.println(heatTable[indexer(p2, x, y, size)]);
                 } 
             }
 
